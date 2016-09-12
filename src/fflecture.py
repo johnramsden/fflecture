@@ -46,17 +46,22 @@ class Editor:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Create lecture with ffmpeg.')
-    args = parser.parse_args()
-
+    parser.add_argument('-v', '--video', action='append',
+                        help='Add one or more video.')
+    print(parser.parse_args())
 
 def main():
     parse_arguments()
+
     video_editor = Editor('ffmpeg')
     video_editor.editor_info()
+
+    #lecture = Lecture()
+
     background_cmd = [video_editor.ffmpeg] + video_editor.create_background_video(
         '/home/john/Workspace/fflecture/resources/stats-background.jpg', 30)
     video_editor.commands.append(background_cmd)
-    video_editor.run()
+    #video_editor.run()
 
 if __name__ == "__main__":
     main()
