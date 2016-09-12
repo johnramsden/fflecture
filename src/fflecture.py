@@ -6,31 +6,37 @@ import argparse
 
 class Lecture:
     def __init__(self, titles: list, background, sequence: list):
-        self.__titles = titles
-        self.__background = background
-        self.__sequence = sequence
+        self.titles = titles
+        self.background = background
+        self.sequence = sequence
+
 
 
 
 class Editor:
-    commands = [[__FFMPEG_BIN, '-h']]
-
-    def set_ffmpeg_bin(self, ffmpeg_bin=None):
-        # Default to linux binary
-        if ffmpeg_bin is None:
-            self.__FFMPEG_BIN = "ffmpeg"
-        else:
-            self.__FFMPEG_BIN = ffmpeg_bin
+    def __init__(self, ffmpeg):
+        self.ffmpeg = ffmpeg
+        self.commands = [[self.ffmpeg, '-h']]
 
     def editor_info(self):
         print("## Editor information ##")
-        print("Binary: ", self.__FFMPEG_BIN)
+        print("Binary: ", self.ffmpeg)
 
-    def create_intro(self):
+    def create_background_video(self, background, length):
+        background_video_command = [self.ffmpeg, '-loop', '1',
+                                    '-i', background,
+                                    '-c:v', 'libx264',
+                                    '-t', str(length),
+                                    '-pix_fmt', 'yuvj444p',
+                                    'background.mp4']
+        return background_video_command
 
-    def create_video_sequence(self):
+    #def create_intro_filter(self):
 
-    def setup_commands(self):
+
+    # def create_video_sequence(self):
+    #
+    # def setup_commands(self):
 
 
     def run(self):
@@ -44,9 +50,9 @@ def parse_arguments():
 
 def main():
     parse_arguments()
-    video_editor = Editor()
+    video_editor = Editor('ffmpeg')
     video_editor.editor_info()
-    video_editor.run()
+    video_editor.create_background_video('/home/john/Workspace/fflecture/resources/stats-background.jpg', 30)
 
 if __name__ == "__main__":
     main()
