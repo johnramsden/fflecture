@@ -22,8 +22,9 @@ class Editor:
         print("## Editor information ##")
         print("Binary: ", self.ffmpeg)
 
+    # Returns ffmpeg command in list to create video from image
     def create_background_video(self, background, length):
-        background_video_command = [self.ffmpeg, '-loop', '1',
+        background_video_command = ['-loop', '1',
                                     '-i', background,
                                     '-c:v', 'libx264',
                                     '-t', str(length),
@@ -52,7 +53,10 @@ def main():
     parse_arguments()
     video_editor = Editor('ffmpeg')
     video_editor.editor_info()
-    video_editor.create_background_video('/home/john/Workspace/fflecture/resources/stats-background.jpg', 30)
+    background_cmd = [video_editor.ffmpeg] + video_editor.create_background_video(
+        '/home/john/Workspace/fflecture/resources/stats-background.jpg', 30)
+    video_editor.commands.append(background_cmd)
+    video_editor.run()
 
 if __name__ == "__main__":
     main()
