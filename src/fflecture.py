@@ -46,8 +46,16 @@ class Editor:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Create lecture with ffmpeg.')
+    parser.add_argument('-b', '--binary',
+                        help='Specify ffmpeg binary, default is ffmpeg')
     parser.add_argument('-v', '--video', action='append',
                         help='Add one or more video.')
+    parser.add_argument('-t', '--title', action='append',
+                        help='Add one or more title.')
+    parser.add_argument('-f', '--font',
+                        help=("Specify font for introduction titles,"
+                              "e.g. /usr/share/fonts/TTF/AnonymousPro-Bold.ttf"))
+    parser.add_argument('n', help="Run in test mode, will not output anything.")
     print(parser.parse_args())
 
 def main():
