@@ -46,8 +46,8 @@ class Editor:
     # text='Lecture 01': fontcolor=white: fontsize=148:
     # box=1: boxcolor=black@0.5: boxborderw=25: x=(w-text_w)/2: y=(h-text_h)/2"
     # -codec:a copy output.mp4
-    def create_intro_titles(self, course_title, lecture_title, font, fontsize, title_start, title_end):
-        filter = [drawtext=enable='between(t,,)']
+    # def create_intro_titles(self, course_title, lecture_title, font, fontsize, title_start, title_end):
+    #     intro_filter = [drawtext=enable='between(t,,)']
 
     # ffmpeg -loop 1 -i stats-background.jpg -i MATH220-E01-part1.MTS -i MATH220-E01-part2.MTS -filter_complex
     # "[0:v:0]duration=10[begin];[begin]drawtext=enable='between(t,1,5)':fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf:text='MATH220'[halfintro];drawtext=enable='between(t,6,10)':fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf:text='Lecture 01'[intro];[intro][1:v:0][1:a:0][2:v:0][2:a:0]concat=n=3:v=1:a=1[v][a]" -map "[v]" -map "[a]" o.mp4
@@ -61,12 +61,12 @@ class Editor:
         for video in range(video_quantity):
             concat_filter.extend(["[{0}:v:0]".format(video),
                            "[{}:a:0]".format(video)])
-            concat_filter.extend(["concat=n={}:v=1:a=1".format(video_quantity), "[v]", "[a]"])
+        concat_filter.extend(["concat=n={}:v=1:a=1".format(video_quantity), "[v]", "[a]"])
         return concat_filter
 
     def Concat_video_command(self, input_videos: list):
         video_command = [self.ffmpeg]
-        for video in input_videos.len():
+        for video in len(input_videos):
             video_command.extend(['-i', video])
         return video_command
 
@@ -105,7 +105,7 @@ def main():
 
     # Create video editor
     video_editor = Editor('ffmpeg')
-
+    print(video_editor.Concat_video_filter(len(arguments.video)))
 
     # background_cmd = [video_editor.ffmpeg] + video_editor.create_background_video(
     #     '/home/john/Workspace/fflecture/resources/stats-background.jpg', 30)
