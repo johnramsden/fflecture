@@ -58,21 +58,26 @@ class Editor:
         :return:
         """
         return {"command": [self.ffmpeg, '-loop', '1', '-i', background,
-                            '-c:v', 'libx264', '-t', self.titles['length'],
+                            '-c:v', 'libx264', '-t', str(self.titles['length']),
                             '-pix_fmt', 'yuvj444p',
                             '-f', 'mpegts', output_stream],
                 "stream": output_stream}
 
-    # ffmpeg -i intermediate1.ts -filter_complex
-    # "drawtext=enable='between(t,1,9)':
-    # fontfile=/usr/share/fonts/TTF/WorkSans-Bold.ttf:
-    # text='STAT302': fontcolor=white: fontsize=148:
-    # box=1: boxcolor=black@0.5: boxborderw=25: x=(w-text_w)/2: y=(h-text_h)/2 [v];
-    # [v] drawtext=enable='between(t,11,19)':
-    # fontfile=/usr/share/fonts/TTF/WorkSans-Bold.ttf:
-    # text='Lecture 01': fontcolor=white: fontsize=148:
-    # box=1: boxcolor=black@0.5: boxborderw=25: x=(w-text_w)/2: y=(h-text_h)/2"
-    # -codec:a copy output.mp4
+    """ A Full title:
+
+    ffmpeg -i intermediate1.ts -filter_complex
+
+    "drawtext=enable='between(t,1,9)':
+    fontfile=/usr/share/fonts/TTF/WorkSans-Bold.ttf:
+    text='STAT302': fontcolor=white: fontsize=148: box=1:
+    boxcolor=black@0.5: boxborderw=25: x=(w-text_w)/2: y=(h-text_h)/2
+    [firsttitle];[firsttitle]drawtext=enable='between(t,11,19)':
+    fontfile=/usr/share/fonts/TTF/WorkSans-Bold.ttf:
+    text='Lecture 01': fontcolor=white: fontsize=148: box=1:
+    boxcolor=black@0.5: boxborderw=25: x=(w-text_w)/2: y=(h-text_h)/2"
+
+    -codec:a copy output.mp4
+    """
 
     def intro_titles_command(self, background: str, titles: list, output_video: str):
         """
@@ -84,25 +89,39 @@ class Editor:
         image_video = self.image_video_command(background)
         intro_titles_command = image_video['command']
 
+        print("Added {}".format(intro_titles_command))
+
         # Setup filter for intro titles
         intro_titles_filter = []
         for index in range(len(titles)):
-            # Setup interval text will display for
-            intro_titles_filter.extend(["drawtext=enable='between(t,{0},{1})'"
-                                       .format(str(index * self.titles['length'] + 1),
-                                               str((index + 1) * self.titles['length'] - 1)),
-                                        "fontfile={}".format(self.titles['font']['file']),
-                                        "fontcolor={}".format(self.titles['font']['color']),
-                                        "fontsize={}".format(str(self.titles['font']['size'])),
-                                        "box={}".format(str(self.titles['box']['status'])),
-                                        "boxcolor={0}@{1}".format(self.titles['box']['color'],
-                                                                  str(self.titles['box']['opacity'])),
-                                        "boxborderw={}".format(str(self.titles['box']['borderw'])),
-                                        "x={}".format(self.titles['coordinates']['x']),
-                                        "y={}".format(self.titles['coordinates']['y'])])
-        return intro_titles_command + ['&&', self.ffmpeg, '-i', image_video['stream'],
-                                       '-filter_complex', '"{}"'.format(":".join(intro_titles_filter)),
-                                       '-codec:a', 'copy', output_video]
+            filter_section = []
+            if index == 0:
+                filter_section.append("drawtext=enable='between(t,{0},{1})'"
+                                           .format(str(index * self.titles['length'] + 1),
+                                                   str((index + 1) * self.titles['length'] - 1)))
+            else:
+                filter_section.append("[firsttitle];[firsttitle]drawtext=enable='between(t,{0},{1})'"
+                                           .format(str(index * self.titles['length'] + 1),
+                                               str((index + 1) * self.titles['length'] - 1)))
+
+            filter_section.extend(["fontfile={}".format(self.titles['font']['file']),
+                                    "fontcolor={}".format(self.titles['font']['color']),
+                                    "fontsize={}".format(str(self.titles['font']['size'])),
+                                    "box={}".format(str(self.titles['box']['status'])),
+                                    "boxcolor={0}@{1}".format(self.titles['box']['color'],
+                                                              str(self.titles['box']['opacity'])),
+                                    "boxborderw={}".format(str(self.titles['box']['borderw'])),
+                                    "x={}".format(self.titles['coordinates']['x']),
+                                    "y={}".format(self.titles['coordinates']['y'])])
+
+            intro_titles_filter.append(":".join(filter_section))
+        print(intro_titles_filter)
+
+        self.commands.update({"intro": [intro_titles_command,
+                                            [self.ffmpeg, '-i', image_video['stream'],
+                                             '-filter_complex', "{}".format(":".join(intro_titles_filter)),
+                                             '-codec:a', 'copy', output_video]
+                                            ]})
 
     # ffmpeg -loop 1 -i stats-background.jpg -i MATH220-E01-part1.MTS -i MATH220-E01-part2.MTS -filter_complex
     # "[0:v:0]duration=10[begin];[begin]drawtext=enable='between(t,1,5)':fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf:text='MATH220'[halfintro];drawtext=enable='between(t,6,10)':fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf:text='Lecture 01'[intro];[intro][1:v:0][1:a:0][2:v:0][2:a:0]concat=n=3:v=1:a=1[v][a]" -map "[v]" -map "[a]" o.mp4
@@ -130,9 +149,14 @@ class Editor:
                               '-map', '"[v]"', '-map', '"[a]"', concat_video])
         return video_command
 
-    def run(self):
-        for cmd in self.commands:
-            sp.call(cmd)
+    def run(self, command: str):
+        if command in self.commands:
+            print("running command: {}".format(command))
+            for ffmpeg_commands in self.commands[command]:
+                print(ffmpeg_commands)
+                sp.call(ffmpeg_commands)
+        else:
+            print("No command {} found".format(command))
 
 
 def parse_arguments():
@@ -163,7 +187,7 @@ def main():
     # Create Lecture
     lecture = Lecture(arguments.lecturetitle, arguments.coursetitle,
                       arguments.picture, arguments.video)
-    lecture.describe_lecture()
+    #lecture.describe_lecture()
 
     # Create video editor
     video_editor = Editor('ffmpeg', font_file=arguments.font, title_length=int(arguments.titlelength))
@@ -172,12 +196,13 @@ def main():
 
     title_video = 'intro_title.mp4'
 
-    for item in video_editor.intro_titles_command(
-            lecture.background,[lecture.class_title, lecture.lecture_title], title_video):
-        print(item)
+    video_editor.intro_titles_command(
+            lecture.background, [lecture.class_title, lecture.lecture_title], title_video)
 
-    # video_editor.commands.append(background_cmd)
-    # video_editor.run()
+    #print(video_editor.commands['intro'])
+
+    video_editor.run("intro")
+    #sp.call(video_editor.image_video_command(lecture.background)["command"])
 
 
 if __name__ == "__main__":
